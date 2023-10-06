@@ -1,27 +1,8 @@
 import fs from "fs";
 import Jimp from "jimp";
-import * as https from "https";
 
-export async function downloadToLocal(image_url) {
-    return new Promise((resolve, reject) => {
-        https.get('https://upload.wikimedia.org/wikipedia/commons/b/bd/Golden_tabby_and_white_kitten_n01.jpg', (res) => {
-            const data = [];
 
-            res.on('data', chunk => {
-                data.push(chunk);
-            });
-
-            res.on('end', () => {
-                const buffer = Buffer.concat(data);
-                fs.writeFileSync('./example.jpg', buffer)
-                resolve('./example.jpg')
-            });
-        }).on('error', (err) => {
-            reject(error.message)
-        });
-
-    })
-}
+export const tempDir = `${process.cwd()}/tmp`
 
 // filterImageFromURL
 // helper function to download, filter, and save the filtered image locally
@@ -35,7 +16,7 @@ export async function filterImageFromURL(inputURL) {
         try {
             const photo = await Jimp.read(inputURL);
             const outpath =
-                "/tmp/filtered." + Math.floor(Math.random() * 2000) + ".jpg";
+                `${tempDir}/filtered.` + Math.floor(Math.random() * 2000) + ".jpg";
             await photo
                 .resize(256, 256) // resize
                 .quality(60) // set JPEG quality
@@ -50,12 +31,18 @@ export async function filterImageFromURL(inputURL) {
 }
 
 // deleteLocalFiles
-// helper function to delete files on the local disk
-// useful to cleanup after tasks
-// INPUTS
-//    files: Array<string> an array of absolute paths to files
-export async function deleteLocalFiles(files) {
-    for (let file of files) {
-        fs.unlinkSync(file);
+// helper function to clean up temporary files
+export async function deleteLocalFiles({except_for}) {
+    const localFiles = fs.readdirSync(tempDir)
+    for (let file of localFiles) {
+        const full_file = `${tempDir}/${file}`
+        try {
+            // clean up directory, but don't delete the file we just created
+            if(full_file !== except_for) {
+                fs.unlinkSync(full_file);
+            }
+        } catch (e) {
+            console.log(`Failed to delete ${file}`)
+        }
     }
 }
