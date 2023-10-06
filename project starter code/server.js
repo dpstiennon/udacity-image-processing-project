@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles} from './util/util.js';
+import {filterImageFromURL, deleteLocalFiles, downloadToLocal} from './util/util.js';
+import fs from "fs";
 
 
 
@@ -13,6 +14,26 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util.js';
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
+  app.get('/filteredimage', async (req, res) => {
+    if(!req.query.image_url) {
+      res.status(400).send('must include image_url query parameter')
+    }
+    const image_url = req.query.image_url
+    try {
+      const example = await downloadToLocal(image_url)
+      const finalUrl = await filterImageFromURL(image_url)
+      if (!finalUrl) {
+        throw new Error('empty url')
+      }
+      res.status(200).sendFile(finalUrl)
+      const localFiles = fs.readdirSync('/tmp')
+      console.log(localFiles)
+    } catch (e) {
+      console.error(e)
+      res.status(422).send(`Unable to process image at ${image_url}`)
+    }
+
+  })
   // @TODO1 IMPLEMENT A RESTFUL ENDPOINT
   // GET /filteredimage?image_url={{URL}}
   // endpoint to filter an image from a public url.
@@ -40,6 +61,6 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util.js';
 
   // Start the Server
   app.listen( port, () => {
-      console.log( `server running http://localhost:${ port }` );
+      console.log( `server running http://127.0.0.1:${ port }` );
       console.log( `press CTRL+C to stop server` );
   } );
