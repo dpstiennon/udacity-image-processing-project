@@ -14,7 +14,8 @@ export async function downloadToLocal(image_url) {
 
         // Note - used GPT-4 for the initial skeleton of this https call
         const file = fs.createWriteStream(outpath);
-        https.get(image_url, (response) => {
+        const headers = {'User-Agent': 'SampleImageDownloadScript (http://axtensoft.com; david.stiennon@gmail.com)'}
+        https.get(image_url,{headers: headers, }, (response) => {
             if (response.statusCode !== 200) {
                 const message = `Failed to get '${image_url}' (${response.statusCode})`;
                 reject(message)
