@@ -12,6 +12,7 @@ export async function downloadToLocal(image_url) {
         const outpath =
             `${tempDir}/buffered.${Math.floor(Math.random() * 2000)}.${extension}`;
 
+        // Note - used GPT-4 for the initial skeleton of this https call
         const file = fs.createWriteStream(outpath);
         https.get(image_url, (response) => {
             if (response.statusCode !== 200) {
@@ -20,7 +21,6 @@ export async function downloadToLocal(image_url) {
                 return;
             }
 
-            // Pipe the response stream (downloaded image) into the file stream (local file)
             response.pipe(file);
 
             file.on('finish', () => {
